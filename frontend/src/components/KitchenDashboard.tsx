@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Utensils, 
@@ -10,9 +10,11 @@ import {
   Sparkles, 
   ArrowLeft, 
   ThermometerSnowflake, 
-  AlertTriangle 
+  AlertTriangle,
+  Clock,
 } from 'lucide-react';
 import { KitchenDashboardData, KitchenLogEntry } from '../types/data';
+import { useFoodStore, type CreateFoodProtocolPayload } from '../store/useFoodStore'; //
 
 interface KitchenDashboardProps {
   data: KitchenDashboardData;
@@ -22,17 +24,9 @@ interface KitchenDashboardProps {
   onBackToLanding: () => void;
 }
 
-interface StorageProtocol {
-  dish: string;
-  quantity: string;
-  perishability: string;
-  badgeClass: string;
-  coolingRule: string;
-  segregationAlert: string;
-  safeWindow: string;
-  targetTemp: string;
-  vessel: string;
-}
+// Same shape as the store's create payload — aliased instead of hand-duplicated
+// so the two can never drift apart again.
+type StorageProtocol = CreateFoodProtocolPayload;
 
 export const KitchenDashboard: React.FC<KitchenDashboardProps> = ({
   data,
@@ -44,6 +38,9 @@ export const KitchenDashboard: React.FC<KitchenDashboardProps> = ({
   const [totalConsumed, setTotalConsumed] = useState<string>('1130');
   const [isSubmittingLog, setIsSubmittingLog] = useState<boolean>(false);
   const [logSuccessMsg, setLogSuccessMsg] = useState<string | null>(null);
+
+  const { createFoodProtocol, isCreating, listings, isLoadingListings, getFoodProtocols } = useFoodStore();
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Log & Preserve Engine State
   const [foodType, setFoodType] = useState<string>('Paneer Butter Masala');
@@ -63,6 +60,19 @@ export const KitchenDashboard: React.FC<KitchenDashboardProps> = ({
   });
   const [isBroadcasting, setIsBroadcasting] = useState<boolean>(false);
   const [broadcastDone, setBroadcastDone] = useState<boolean>(false);
+
+  // Pull the live feed once on mount so the surplus-listings table has data
+  // even before this kitchen generates anything new this session.
+  useEffect(() => {
+    getFoodProtocols();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Newest 3 DB rows for the feed below — defensively sorted by createdAt in
+  // case anything upstream ever returns them out of order.
+  const recentListings = [...listings]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 3);
 
   const handleSubmitActuals = (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,6 +107,7 @@ export const KitchenDashboard: React.FC<KitchenDashboardProps> = ({
     e.preventDefault();
     setIsGeneratingProtocol(true);
     setGeneratedProtocol(null);
+    setSaveError(null);
 
     setTimeout(() => {
       setIsGeneratingProtocol(false);
@@ -154,6 +165,13 @@ export const KitchenDashboard: React.FC<KitchenDashboardProps> = ({
       }
 
       setGeneratedProtocol(protocol);
+
+      // Persist what was just generated so it shows up in the NGO feed
+      createFoodProtocol(protocol).then((result) => {
+        if (!result.success) {
+          setSaveError(result.error);
+        }
+      });
     }, 1000);
   };
 
@@ -163,6 +181,8 @@ export const KitchenDashboard: React.FC<KitchenDashboardProps> = ({
     setTimeout(() => {
       setIsBroadcasting(false);
       setBroadcastDone(true);
+      // refresh so the surplus-listings feed reflects the latest DB state
+      getFoodProtocols();
       const kg = parseFloat(foodQuantity) || 12;
       onBroadcastSurplusToNgo(kg, `${generatedProtocol.dish} (${kg}kg) • ${generatedProtocol.safeWindow}`);
       setTimeout(() => setBroadcastDone(false), 4000);
@@ -487,6 +507,15 @@ export const KitchenDashboard: React.FC<KitchenDashboardProps> = ({
                       {generatedProtocol.targetTemp}
                     </span>
                   </div>
+
+                  {saveError && (
+                    <div className="text-[#D9534F] bg-rose-50 border border-rose-200 p-2 rounded-lg text-[11px] font-medium">
+                      Couldn't list this: {saveError}
+                    </div>
+                  )}
+                  {isCreating && (
+                    <div className="text-slate-500 text-[11px]">Saving to database…</div>
+                  )}
                 </div>
               )}
 
@@ -515,7 +544,7 @@ export const KitchenDashboard: React.FC<KitchenDashboardProps> = ({
 
         </div>
 
-        {/* AUDIT LOG TABLE (PURE WHITE SAAS CARD) */}
+        {/* SURPLUS LISTINGS TABLE (PURE WHITE SAAS CARD) */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -524,11 +553,11 @@ export const KitchenDashboard: React.FC<KitchenDashboardProps> = ({
         >
           <div className="flex items-center justify-between pb-4 border-b border-[#E5E5E5] mb-4">
             <div>
-              <h3 className="text-base font-bold text-[#1C1917]">Recent Shift Preparation Audits</h3>
-              <p className="text-xs text-[#52525B]">Closed-loop reconciliation with Bhubaneswar NGO mesh</p>
+              <h3 className="text-base font-bold text-[#1C1917]">Recent Surplus Listings</h3>
+              <p className="text-xs text-[#52525B]">Live feed broadcast to the Bhubaneswar NGO mesh</p>
             </div>
             <span className="text-xs font-mono text-[#52525B]">
-              Total Records: {data.logs.length}
+              Total Records: {listings.length}
             </span>
           </div>
 
@@ -536,33 +565,54 @@ export const KitchenDashboard: React.FC<KitchenDashboardProps> = ({
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-[#E5E5E5] text-[#52525B] font-mono">
-                  <th className="pb-3 font-semibold">SHIFT ID</th>
-                  <th className="pb-3 font-semibold">MEAL TYPE</th>
-                  <th className="pb-3 font-semibold">PREPARED</th>
-                  <th className="pb-3 font-semibold">CONSUMED</th>
-                  <th className="pb-3 font-semibold">SURPLUS</th>
+                  <th className="pb-3 font-semibold">LISTING ID</th>
+                  <th className="pb-3 font-semibold">DISH</th>
+                  <th className="pb-3 font-semibold">QUANTITY</th>
+                  <th className="pb-3 font-semibold">SAFE WINDOW</th>
+                  <th className="pb-3 font-semibold">PERISHABILITY</th>
                   <th className="pb-3 font-semibold">STATUS</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E5E5]">
-                {data.logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-[#F4F4F5] transition-colors">
-                    <td className="py-3 font-mono font-semibold text-[#1C1917]">{log.id}</td>
-                    <td className="py-3 font-semibold text-[#1C1917]">{log.mealType}</td>
-                    <td className="py-3 text-[#52525B]">{log.prepared} meals</td>
-                    <td className="py-3 text-[#52525B]">{log.consumed} meals</td>
-                    <td className="py-3 font-bold text-[#D9534F]">
-                      {log.surplus > 0 ? `+${log.surplus} portions` : '0 (Zero Waste)'}
+                {isLoadingListings && recentListings.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="py-6 text-center text-[#52525B]">
+                      Loading listings…
+                    </td>
+                  </tr>
+                )}
+                {!isLoadingListings && recentListings.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="py-6 text-center text-[#52525B]">
+                      No surplus listed yet — generate a protocol above to get started.
+                    </td>
+                  </tr>
+                )}
+                {recentListings.map((listing) => (
+                  <tr key={listing.id} className="hover:bg-[#F4F4F5] transition-colors">
+                    <td className="py-3 font-mono font-semibold text-[#1C1917]">
+                      FP-{listing.id.slice(-4).toUpperCase()}
+                    </td>
+                    <td className="py-3 font-semibold text-[#1C1917]">{listing.dish}</td>
+                    <td className="py-3 text-[#52525B]">{listing.quantity}</td>
+                    <td className="py-3 text-[#52525B]">{listing.safeWindow}</td>
+                    <td className="py-3">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border ${listing.badgeClass}`}>
+                        {listing.perishability}
+                      </span>
                     </td>
                     <td className="py-3">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
-                        log.status === 'Distributed'
-                          ? 'bg-[#0F5132]/10 text-[#0F5132] border border-[#0F5132]/20'
-                          : 'bg-[#D9534F]/10 text-[#D9534F] border border-[#D9534F]/20'
-                      }`}>
-                        {log.status === 'Distributed' && <CheckCircle2 className="w-3 h-3" />}
-                        <span>{log.status}</span>
-                      </span>
+                      {listing.status === 'claimed' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#0F5132]/10 text-[#0F5132] border border-[#0F5132]/20">
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>Claimed by NGO</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                          <Clock className="w-3 h-3" />
+                          <span>Awaiting Pickup</span>
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}

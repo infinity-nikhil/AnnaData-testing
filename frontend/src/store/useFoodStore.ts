@@ -12,7 +12,7 @@ export interface FoodProtocolListing {
   perishability: string;
   badgeClass: string;
   coolingRule: string;
-  segregationAlert: boolean;
+  segregationAlert: string;
   safeWindow: string;
   targetTemp: string | number;
   vessel: string;
@@ -31,7 +31,7 @@ export interface CreateFoodProtocolPayload {
   perishability: string;
   badgeClass: string;
   coolingRule: string;
-  segregationAlert: boolean;
+  segregationAlert: string;
   safeWindow: string;
   targetTemp: string | number;
   vessel: string;
