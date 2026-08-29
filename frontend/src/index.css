@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg: #FAFAFA;
+    --color-text-primary: #1C1917;
+    --color-text-secondary: #52525B;
+    --color-pine: #0F5132;
+    --color-pine-dark: #0B3A24;
+    --color-terracotta: #D9534F;
+    --color-border: #E5E5E5;
+    --color-input: #F4F4F5;
+  }
+
+  body {
+    background-color: #FAFAFA;
+    color: #1C1917;
+    font-family: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  /* Custom subtle scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #FAFAFA;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #D4D4D8;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #0F5132;
+  }
+}
+
+/* Premium SaaS Card Foundation */
+.saas-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E5E5E5;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.saas-card-hover {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.saas-card-hover:hover {
+  border-color: #D4D4D8;
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+}
+
+/* Deep Pine Primary Buttons */
+.btn-pine {
+  background-color: #0F5132;
+  color: #FFFFFF;
+  font-weight: 600;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-pine:hover {
+  background-color: #0B3A24;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px -2px rgba(15, 81, 50, 0.25);
+}
+
+.btn-pine:active {
+  transform: translateY(0);
+}
+
+/* Form Inputs & Selectors */
+.saas-input {
+  background-color: #F4F4F5;
+  border: 1px solid #E5E5E5;
+  color: #1C1917;
+  transition: all 0.15s ease-in-out;
+}
+
+.saas-input:focus {
+  background-color: #FFFFFF;
+  border-color: #0F5132;
+  outline: none;
+  box-shadow: 0 0 0 1px #0F5132;
+}
+
+/* AnnaData Text Masking */
+.text-mask-anna {
+  background-image: url('/assets/anna_food_texture.jpg');
+  background-size: cover;
+  background-position: center;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(15, 23, 42, 0.12);
+  filter: drop-shadow(0 6px 16px rgba(28, 25, 23, 0.22));
+}
+
+.text-mask-data {
+  background-image: url('/assets/data_circuit_texture.jpg');
+  background-size: cover;
+  background-position: center;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(15, 23, 42, 0.12);
+  filter: drop-shadow(0 6px 16px rgba(15, 81, 50, 0.22));
+}
