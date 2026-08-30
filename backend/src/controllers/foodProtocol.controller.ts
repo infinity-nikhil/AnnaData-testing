@@ -4,6 +4,8 @@ import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db/drizzle.js";
 import { foodProtocols, institutions } from "../db/schema.js";
 
+import { handleMail } from "../services/mailer.service.js";
+
 // ---------- Kitchen: create a listing ----------
 
 export const createFoodProtocol = async (req: Request, res: Response) => {
@@ -37,6 +39,11 @@ export const createFoodProtocol = async (req: Request, res: Response) => {
         vessel,
       })
       .returning();
+
+    // fire-and-forget: don't make the kitchen wait on NGO emails
+    handleMail(foodProtocol, req.institution!).catch((err) =>
+      console.error("Notify NGOs failed:", err)
+    );
 
     return res.status(201).json({
       success: true,

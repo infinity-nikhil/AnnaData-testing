@@ -24,6 +24,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
     location: 'Bhubaneswar, Odisha',
     capacityValue: type === 'kitchen' ? 1200 : 80,
     contactPhone: '+91 94370 00000',
+    contactEmail: '',
   });
   const [isDone, setIsDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -142,6 +143,18 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                   value={formData.contactPhone}
                   onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[#F4F4F5] border border-[#E5E5E5] text-[#1C1917] focus:bg-white focus:border-[#0F5132] focus:ring-1 focus:ring-[#0F5132] transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[#1C1917] font-semibold mb-1">Contact Email</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.contactEmail}
+                  onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F4F4F5] border border-[#E5E5E5] text-[#1C1917] focus:bg-white focus:border-[#0F5132] focus:ring-1 focus:ring-[#0F5132] transition-colors"
+                  placeholder='johndoe@gmail.com'
                 />
               </div>
 
