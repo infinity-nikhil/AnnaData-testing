@@ -322,9 +322,9 @@ export const NgoDashboard: React.FC<NgoDashboardProps> = ({
             </div>
 
             <div className="text-center space-y-1">
-              <h3 className="text-2xl font-bold font-display text-[#1C1917]">Dispatch Confirmed!</h3>
+              <h3 className="text-2xl font-bold font-display text-[#1C1917]">Thank you For Connecting With AnnaData!</h3>
               <p className="text-xs text-[#52525B]">
-                Kitchen has been notified that your volunteer is arriving for pickup.
+                You can contact the kitchen that your volunteer is arriving for pickup.
               </p>
             </div>
 
@@ -345,20 +345,29 @@ export const NgoDashboard: React.FC<NgoDashboardProps> = ({
               </div>
             </div>
 
+            <div className="p-4 rounded-2xl bg-[#F4F4F5] border border-[#E5E5E5] text-xs space-y-2">
+              <div className="flex justify-between">
+                <span className="text-[#1C1917]">The details has been sent to you via mail.</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#1C1917]">You can check and confirm the kitchen about your arrival</span>
+              </div>
+            </div>
+
             <div className="space-y-2 pt-2">
               {/* contactPhone isn't returned by GET /food-protocols yet — using the
                   placeholder number until the backend includes it on the institution join */}
-              <a
+              {/* <a
                 href="tel:+919437012345"
                 className="w-full py-3 rounded-2xl bg-[#0F5132] hover:bg-[#0B3A24] text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm transition-colors"
               >
                 <Phone className="w-4 h-4" />
                 <span>Call Kitchen Staff Desk</span>
-              </a>
+              </a>  */}
 
               <button
                 onClick={() => setClaimSuccessModal(false)}
-                className="w-full py-3 rounded-2xl bg-[#F4F4F5] hover:bg-[#E5E5E5] text-[#1C1917] font-semibold text-xs transition-colors border border-[#E5E5E5]"
+                className="w-full py-3 rounded-2xl bg-[#0F5132] hover:bg-[#0B3A24] text-white font-semibold text-xs transition-colors border border-[#E5E5E5]"
               >
                 Close & View Radar
               </button>
