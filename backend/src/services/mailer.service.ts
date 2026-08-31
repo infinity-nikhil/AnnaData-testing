@@ -80,3 +80,49 @@ export async function handleMail(foodProtocol: FoodProtocol, kitchen: Institutio
     if (r.status === "rejected") console.error(`Failed to notify NGO ${ngos[i].id}:`, r.reason);
   });
 }
+
+function buildClaimEmail(foodProtocol: FoodProtocol, kitchen: Institution) {
+  const subject = `You claimed: ${foodProtocol.dish} — kitchen contact details`;
+  const body = `
+You've successfully claimed this listing on AnnaData.
+
+Dish: ${foodProtocol.dish}
+Quantity: ${foodProtocol.quantity}
+Safe window: ${foodProtocol.safeWindow}
+
+Kitchen contact details for pickup coordination:
+Name: ${kitchen.organizationName}
+Location: ${kitchen.location}
+Phone: ${kitchen.contactPhone}
+Email: ${kitchen.contactEmail ?? "Not provided"}
+
+Please reach out to arrange pickup within the safe window above.
+`.trim();
+
+  return { subject, body };
+}
+
+export async function handleClaimMail(foodProtocol: FoodProtocol, ngo: Institution) {
+  if (!ngo.contactEmail) {
+    console.error(`[mailer] NGO ${ngo.id} has no contactEmail — skipping claim notification`);
+    return;
+  }
+
+  try {
+    const [kitchen] = await db
+      .select()
+      .from(institutions)
+      .where(eq(institutions.id, foodProtocol.institutionId));
+
+    if (!kitchen) {
+      console.error(`[mailer] Kitchen ${foodProtocol.institutionId} not found for listing ${foodProtocol.id}`);
+      return;
+    }
+
+    const { subject, body } = buildClaimEmail(foodProtocol, kitchen);
+    await sendGmail({ toMail: ngo.contactEmail, subject, body });
+    console.log(`[mailer] Claim notification sent to ${ngo.contactEmail}`);
+  } catch (err) {
+    console.error(`[mailer] Failed to send claim notification for listing ${foodProtocol.id}:`, err);
+  }
+}

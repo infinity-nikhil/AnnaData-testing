@@ -4,7 +4,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db/drizzle.js";
 import { foodProtocols, institutions } from "../db/schema.js";
 
-import { handleMail } from "../services/mailer.service.js";
+import { handleMail, handleClaimMail } from "../services/mailer.service.js";
 
 // ---------- Kitchen: create a listing ----------
 
@@ -117,6 +117,10 @@ export const claimFoodProtocol = async (req: Request, res: Response) => {
         message: "This listing has already been claimed by another NGO.",
       });
     }
+
+    handleClaimMail(claimed, req.institution!).catch((err) =>
+      console.error("Claim notification failed:", err)
+    );
 
     return res.status(200).json({
       success: true,
